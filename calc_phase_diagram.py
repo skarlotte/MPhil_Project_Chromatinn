@@ -174,19 +174,28 @@ def plot_dprof(z_bins, dprof, dprof_std, popt, savefig_path, salt, hd_density):
         - hd_density: the high density value of the densitry profile  
     
     """
-    
+    label_fontsize = 16
+    title_fontsize = 18
+    tick_fontsize = 16
+    legend_fontsize = 13
+
     plt.figure(figsize=(8, 4.5), dpi=150) 
     plt.plot(z_bins, dprof, color="#E63946", linewidth=2, label="Density")
     upper_bound_std = dprof + dprof_std
     lower_bound_std = np.maximum(dprof - dprof_std, 0)  # Ensure no negative values
     plt.fill_between(z_bins, lower_bound_std, upper_bound_std, color="#E63946", alpha=0.25, label="Density ± Std")
     plt.plot(z_bins, rho(z_bins, *popt), 'b--', linewidth=2, label=f"Fitted Profile, hd: {np.round(hd_density, 2)}")
-    plt.xlabel("Z Coordinate (Å)", fontsize=12, fontweight="bold")
-    plt.ylabel("Density", fontsize=12, fontweight="bold")
-    plt.title(f"Nucleosome Density Profile | Salt: {salt} M", fontsize=14, fontweight="bold", pad=10)
+
+    plt.xlabel("Z Coordinate (Å)", fontsize=label_fontsize, fontweight="bold")
+    plt.ylabel("Density (g/cm³)", fontsize=label_fontsize, fontweight="bold")
+    plt.title(f"Nucleosome Density Profile | Salt: {salt} M", fontsize=title_fontsize, fontweight="bold", pad=10)
+
     plt.grid(True, linestyle="--", linewidth=0.6, alpha=0.6)
-    plt.legend(frameon=True, fontsize=10, loc="upper right")
+    plt.legend(frameon=True, fontsize=legend_fontsize, loc="upper right")
+    plt.tick_params(axis='both', labelsize=tick_fontsize)
+    plt.tight_layout()
     plt.savefig(savefig_path, dpi=200, bbox_inches="tight")
+    plt.close()
 
 def process_dumps(dumps_dir_name):
     """Process .dump files in the given directory and extract nucleosome z-coordinates.
@@ -283,42 +292,54 @@ def fit_phase_diagram(csv_path="densities.csv"):
     A, d_c = params2
     print(f"Critical salt: {S_c}, Critical density: {d_c}")
 
-    # Regression plots with LaTeX equation titles
+    # Regression plots
     fig, ax = plt.subplots(1, 2, figsize=(12, 5))
 
+    # Font settings
+    label_fontsize = 16
+    title_fontsize = 17
+    tick_fontsize = 14
+    legend_fontsize = 14
+
+    # First subplot
     ax[0].plot(S, fit_func1(S, d, S_c), label="Fitted Curve", color='crimson', linewidth=2)
     ax[0].scatter(S, y1, label="Original Data", color='navy', s=50, zorder=3)
-    ax[0].set_xlabel("Salt / M", fontsize=12, fontweight="bold")
-    ax[0].set_ylabel(r"$\mathrm{reg\_Y1}$", fontsize=12, fontweight="bold")
-    ax[0].set_title(r"$ (\rho_h-\rho_l)^{3.06}=d\left(1-\frac{S}{S_c}\right)$", fontsize=12, fontweight="bold")
+    ax[0].set_xlabel("Salt / M", fontsize=label_fontsize, fontweight="bold")
+    ax[0].set_ylabel(r"$\mathrm{reg\_Y1}$", fontsize=label_fontsize, fontweight="bold")
+    ax[0].set_title(r"$ (\rho_h-\rho_l)^{3.06}=d\left(1-\frac{S}{S_c}\right)$", fontsize=title_fontsize, fontweight="bold")
     ax[0].grid(True, linestyle="--", linewidth=0.8, alpha=0.7)
-    ax[0].legend(fontsize=10)
-    ax[0].tick_params(axis='both', labelsize=10)
+    ax[0].legend(fontsize=legend_fontsize)
+    ax[0].tick_params(axis='both', labelsize=tick_fontsize)
 
+    # Second subplot
     ax[1].plot(S, fit_func2(S, A, d_c), label="Fitted Curve", color='crimson', linewidth=2)
-    ax[1].scatter(S, y2, label="Original Data", color='navy', s=50, zorder=3)
-    ax[1].set_xlabel("Salt / M", fontsize=12, fontweight="bold")
-    ax[1].set_ylabel(r"$\mathrm{reg\_Y2}$", fontsize=12, fontweight="bold")
-    ax[1].set_title(r"$ \rho_h+\rho_l=2\rho_c+2A\,(S-S_c)$", fontsize=12, fontweight="bold")
+    ax[1].scatter(S, y2, label="Original Data", color='navy', s=55, zorder=3)
+    ax[1].set_xlabel("Salt / M", fontsize=label_fontsize, fontweight="bold")
+    ax[1].set_ylabel(r"$\mathrm{reg\_Y2}$", fontsize=label_fontsize, fontweight="bold")
+    ax[1].set_title(r"$ \rho_h+\rho_l=2\rho_c+2A\,(S-S_c)$", fontsize=title_fontsize, fontweight="bold")
     ax[1].grid(True, linestyle="--", linewidth=0.8, alpha=0.7)
-    ax[1].legend(fontsize=10)
-    ax[1].tick_params(axis='both', labelsize=10)
+    ax[1].legend(fontsize=legend_fontsize)
+    ax[1].tick_params(axis='both', labelsize=tick_fontsize)
 
     plt.tight_layout()
     plt.savefig("regression_plots.png", dpi=300, bbox_inches="tight")
     plt.close()
 
-    # Phase diagram with dots only, including the critical point
+    # Phase diagram plot
     fig, ax = plt.subplots(figsize=(6, 5))
+
     densities = np.concatenate((df["Low_Density"].values, df["High_Density"].values))
     salts_concat = np.concatenate((df["Salt"].values, df["Salt"].values))
-    ax.scatter(densities, salts_concat, color='darkgreen', s=60, alpha=0.8, label='Coexistence density values')
-    ax.scatter(d_c, S_c, marker='o', color='white', edgecolor='red', s=100, linewidth=2,
-            label=f"Critical point, Cc = {round(S_c, 4)}")
-    ax.set_xlabel("Density / g cm$^{-3}$", fontsize=12, fontweight="bold")
-    ax.set_ylabel("Salt / M", fontsize=12, fontweight="bold")
-    ax.set_title("Phase diagram of chromatin\n(linker DNA length: 25 bp)", fontsize=14, fontweight="bold", pad=10)
-    ax.legend(fontsize=10)
+
+    ax.scatter(densities, salts_concat, color='darkgreen', s=70, alpha=0.8, label='Coexistence density values')
+    ax.scatter(d_c, S_c, marker='o', color='white', edgecolor='red', s=120, linewidth=2,
+            label=f"Critical point. Critical salt: {round(S_c, 3)}")
+
+    ax.set_xlabel("Density / g cm$^{-3}$", fontsize=label_fontsize, fontweight="bold")
+    ax.set_ylabel("Salt / M", fontsize=label_fontsize, fontweight="bold")
+    ax.set_title("Phase diagram of chromatin\n(linker DNA length: 25 bp)", fontsize=title_fontsize, fontweight="bold", pad=10)
+    ax.legend(fontsize=legend_fontsize)
+    ax.tick_params(axis='both', labelsize=tick_fontsize)
     ax.grid(True, linestyle="--", linewidth=0.8, alpha=0.7)
 
     plt.tight_layout()
@@ -344,4 +365,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
